@@ -1,1 +1,0 @@
-{"version":3,"file":"connect.d.ts","sourceRoot":"","sources":["../connect.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,IAAI,CAAA;AAI9B,cAAM,UAAU;IACZ,OAAO,CAAC,aAAa,CAAsB;IAE3C,SAAS,WAAS,SAAS,UAE1B;IAED,YAAY,WAAS,SAAS,UAE7B;IAED,iBAAiB,WAAS,SAAS,WAAS,MAAM,UAMjD;CAGJ"}
