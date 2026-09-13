@@ -1,7 +1,10 @@
 import {WebSocketServer} from "ws"
-import connect from "./connect.js"
+import connect from "./src/connect.js"
 import http from "node:http"
 
+import { busBoyUploadMidlleware } from "./src/Middleware/busBoy.upload.js"
+import { uploadRoutes } from "./src/Modules/Upload/upload.routes.js"
+import { uploadService } from "./src/Modules/Upload/upload.service.js"
 const PORT=4000
 
 const server=http.createServer()
@@ -10,6 +13,9 @@ server.on("request",(req,res)=>{
     if(req.method=="GET" && req.url=="/")
     {
         res.end("hi this is ghost drop")
+    }
+    if(req.method=="POST" && req.url=="/upload"){
+        uploadRoutes(req,res)
     }
 })
 

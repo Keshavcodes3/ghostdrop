@@ -39,6 +39,13 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "include": ["*.ts", "Data/*.ts"],
+  "include": [
+    "*.ts",
+    "src/Data/*.ts",
+    "src/connect.ts",
+    "server.ts",
+    "src/Middleware/*.ts",
+    "src/Modules/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"],
 }
