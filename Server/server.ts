@@ -1,58 +1,67 @@
-import {WebSocketServer} from "ws"
-import connect from "./src/connect.js"
-import http from "node:http"
+import { WebSocketServer } from "ws";
+import connect from "./src/connect.js";
+import http from "node:http";
+import { uploadRoutes } from "./src/Modules/Upload/upload.routes.js";
 
-import { busBoyUploadMidlleware } from "./src/Middleware/busBoy.upload.js"
-import { uploadRoutes } from "./src/Modules/Upload/upload.routes.js"
-import { uploadService } from "./src/Modules/Upload/upload.service.js"
-const PORT=4000
+const PORT = Number(process.env.PORT ?? 4000);
 
-const server=http.createServer()
+const server = http.createServer((req, res) => {
+  const host = req.headers.host ?? "localhost";
+  const url = new URL(req.url ?? "/", `http://${host}`);
+  if (req.method === "GET" && url.pathname === "/") {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain");
+    res.end("hi this is ghost drop");
+    return;
+  }
+  if (req.method === "POST" && url.pathname === "/upload") {
+    uploadRoutes(req, res);
+    return;
+  }
+  if (req.method === "GET" && url.pathname.startsWith("/download/")) {
+    uploadRoutes(req, res);
+    return;
+  }
+  res.statusCode = 404;
+  res.setHeader("Content-Type", "application/json");
+  res.end(JSON.stringify({ error: "Route not found" }));
+});
 
-server.on("request",(req,res)=>{
-    if(req.method=="GET" && req.url=="/")
-    {
-        res.end("hi this is ghost drop")
-    }
-    if(req.method=="POST" && req.url=="/upload"){
-        uploadRoutes(req,res)
-    }
-})
+const wss = new WebSocketServer({
+  noServer: true
+});
 
-const wss=new WebSocketServer({
-    noServer:true,
-})
-server.on("upgrade",(req,socket,head)=>{
-    wss.handleUpgrade(req,socket,head,(ws)=>{
-        wss.emit("connection",ws,req)
-        ws.send(JSON.stringify({
-            type:"Welcome",
-            message:"connected to GhostDrop signaling server",
-        }))
-    })
-})
+server.on("upgrade", (req, socket, head) => {
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit("connection", ws, req);
+  });
+});
 
-
-wss.on("connection",(socket)=>{
-    connect.addClient(socket)
-    socket.send(JSON.stringify({
-        type:"Welcome",
-        message:"connected to GhostDrop signaling server",
-    }))
-
+wss.on("connection", (socket) => {
+  connect.addClient(socket);
+  socket.send(JSON.stringify({
+    type: "Welcome",
+    message: "connected to GhostDrop signaling server"
+  }));
   socket.on("message", (data) => {
-    console.log("Received:", data.toString());
-    connect.broadCastMessages(socket,data.toString())
+    try {
+      connect.handleMessage(socket, data.toString());
+    } catch {
+      try {
+        socket.send(JSON.stringify({ type: "ERROR", code: "INTERNAL", message: "Failed to process message" }));
+      } catch {
+        void 0;
+      }
+    }
   });
-
   socket.on("close", () => {
-    connect.removeClient(socket)
-    console.log("Peer disconnected");
+    connect.removeClient(socket);
   });
-})
+  socket.on("error", () => {
+    connect.removeClient(socket);
+  });
+});
 
-server.listen(PORT,()=>{
-    console.log(`GhostDrop signaling server running on ws://localhost:${PORT}`);
-})
-
-
+server.listen(PORT, () => {
+  console.log(`GhostDrop signaling server running on ws://localhost:${PORT}`);
+});
